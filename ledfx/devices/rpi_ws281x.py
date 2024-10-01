@@ -44,7 +44,7 @@ class RPI_WS281X(Device):
                 vol.Required(
                     "gpio_pin",
                     description="Raspberry Pi GPIO pin your LEDs are connected to",
-                ): vol.In(list([21, 31])),
+                ): vol.In(list([10, 21, 31])),
                 vol.Required(
                     "color_order", description="Color order", default="RGB"
                 ): vol.In(list(COLOR_ORDERS.keys())),
@@ -68,7 +68,7 @@ class RPI_WS281X(Device):
                 "Unable to load ws281x module - are you on a Raspberry Pi?"
             )
             self.deactivate()
-
+        self.buffer = bytearray(self.pixel_count * 4)
         self.strip = PixelStrip(
             self.pixel_count,
             self.config["gpio_pin"],
@@ -79,6 +79,7 @@ class RPI_WS281X(Device):
             self.LED_CHANNEL,
         )
         self.strip.begin()
+        super().activate()
 
     def deactivate(self):
         super().deactivate()
@@ -111,14 +112,14 @@ class RPI_WS281X(Device):
             elif self.color_order == ColorOrder.GBR:
                 self.swap(self.buffer, i, i + 1)
                 self.swap(self.buffer, i, i + 2)
-            for led in len(self.pixel_count):
-                self.strip.setPixelColor(
-                    led,
-                    self.buffer[led],
-                    self.buffer[led + 1],
-                    self.buffer[led + 2],
-                )
-            self.strip.show()
+        for led in range(0,self.pixel_count):
+            self.strip.setPixelColor(
+                led,
+                (self.buffer[led * 3] << 16) | \
+                (self.buffer[led * 3 + 1] << 8) | \
+                self.buffer[led * 3 + 2]
+            )
+        self.strip.show()
 
     def swap(self, array, pos1, pos2):
         array[pos1], array[pos2] = array[pos2], array[pos1]
