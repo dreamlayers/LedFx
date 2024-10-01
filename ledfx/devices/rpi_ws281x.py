@@ -86,40 +86,10 @@ class RPI_WS281X(Device):
 
     def flush(self, data):
         """Flush LED data to the strip"""
-        byteData = data.astype(np.dtype("B"))
 
-        i = 3
-        for rgb in byteData:
-            i += 3
-            rgb_bytes = rgb.tobytes()
-            self.buffer[i], self.buffer[i + 1], self.buffer[i + 2] = (
-                rgb_bytes[0],
-                rgb_bytes[1],
-                rgb_bytes[2],
-            )
-
-            if self.color_order == ColorOrder.RGB:
-                continue
-            elif self.color_order == ColorOrder.GRB:
-                self.swap(self.buffer, i, i + 1)
-            elif self.color_order == ColorOrder.BGR:
-                self.swap(self.buffer, i, i + 2)
-            elif self.color_order == ColorOrder.RBG:
-                self.swap(self.buffer, i + 1, i + 2)
-            elif self.color_order == ColorOrder.BRG:
-                self.swap(self.buffer, i, i + 1)
-                self.swap(self.buffer, i + 1, i + 2)
-            elif self.color_order == ColorOrder.GBR:
-                self.swap(self.buffer, i, i + 1)
-                self.swap(self.buffer, i, i + 2)
-        for led in range(0,self.pixel_count):
+        for idx, rgb in enumerate(data):
             self.strip.setPixelColor(
-                led,
-                (self.buffer[led * 3] << 16) | \
-                (self.buffer[led * 3 + 1] << 8) | \
-                self.buffer[led * 3 + 2]
+                idx,
+                (round(rgb[0]) << 16) | (round(rgb[1]) << 8) | round(rgb[2])
             )
         self.strip.show()
-
-    def swap(self, array, pos1, pos2):
-        array[pos1], array[pos2] = array[pos2], array[pos1]
